@@ -27,14 +27,18 @@ BufferFrame& BufferManager::fixPage(uint64_t pageId, bool exclusive) {
     
     // lock the frame shared or exclusively in a blocking manner
     if(exclusive) {
-        if(pthread_rwlock_wrlock(&frame->lock) != 0) {
-            throw runtime_error("Could not write lock (" + to_string(errno) + "): " + strerror(errno));
+        int r = pthread_rwlock_wrlock(&frame->lock);
+        if(r != 0) {
+            throw runtime_error("Could not write lock (" + to_string(r) + "): " + strerror(r));
         }
     } else {
-        if(pthread_rwlock_rdlock(&frame->lock) != 0) {
-            throw runtime_error("Could not read lock (" + to_string(errno) + "): " + strerror(errno));
+        int r = pthread_rwlock_rdlock(&frame->lock);
+        if(r != 0) {
+            throw runtime_error("Could not read lock (" + to_string(r) + "): " + strerror(r));
         }
     }
+    
+    cout << "Locked " << pageId << endl;
     
     return *this->frames[pageId];
 }
@@ -42,11 +46,19 @@ BufferFrame& BufferManager::fixPage(uint64_t pageId, bool exclusive) {
 void BufferManager::unfixPage(BufferFrame& frame, bool isDirty) {
     frame.dirty = isDirty;
     
-    if(pthread_rwlock_unlock(&frame.lock) != 0) {
-        throw runtime_error("Could not unlock (" + to_string(errno) + "): " + strerror(errno));
+    int r = pthread_rwlock_unlock(&frame.lock);
+    if(r != 0) {
+        throw runtime_error("Could not unlock (" + to_string(r) + "): " + strerror(r));
     }
+    
+    cout << "Unlocked " << frame.pageId << endl;
 }
 
 BufferManager::~BufferManager() {
-    // TODO write all dirty pages back
+    for(auto it = this->frames.begin(); it != this->frames.end(); it++) {
+        if(it->second->dirty) {
+            cout << "Writing " << it->second->pageId << endl;
+            it->second->write();
+        }
+    }
 }

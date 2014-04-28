@@ -22,18 +22,24 @@ BufferFrame::BufferFrame() : pageId(0), dirty(false) {
 
 BufferFrame::BufferFrame(uint64_t pageId) : pageId(pageId), dirty(false) {
     // TODO mmap data from file
-    if(pthread_rwlock_init(&this->lock, NULL) != 0) {
-        throw runtime_error("Could not initialize rwlock (" + to_string(errno) + "): " + strerror(errno));
+    int r = pthread_rwlock_init(&this->lock, NULL);
+    if(r != 0) {
+        throw runtime_error("Could not initialize rwlock (" + to_string(r) + "): " + strerror(r));
     }
     
-    cout << "Created lock " << pageId << endl;
+    cout << "Created " << pageId << endl;
 }
 
 BufferFrame::~BufferFrame() {
-    cout << "Unlocking " << pageId << endl;
+    cout << "destroyed " << pageId << endl;
     
-    if(pthread_rwlock_destroy(&this->lock) != 0) {
-        throw runtime_error("Could not destroy rwlock (" + to_string(errno) + "): " + strerror(errno));
+    int r = pthread_rwlock_destroy(&this->lock);
+    if(r != 0) {
+        throw runtime_error("Could not destroy rwlock (" + to_string(r) + "): " + strerror(r));
     }
+}
+
+void BufferFrame::write() {
+    // TODO implement
 }
 
