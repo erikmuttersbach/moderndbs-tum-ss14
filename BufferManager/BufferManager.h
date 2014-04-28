@@ -11,6 +11,9 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <list>
+#include <mutex>
+#include <string>
 
 #include "BufferFrame.h"
 
@@ -23,18 +26,23 @@
 // Returns the 32 bit page number component of a page id
 #define PAGEID_PAGE(pageId)     (pageId & 0x00000000FFFFFFFF)
 
+// TOODO Remove
+std::string thread_name();
+
 class BufferManager {
 public:
     unsigned int size;
+    static unsigned int frameSize;
     
     BufferManager(unsigned int size);
     
-    BufferFrame& fixPage(uint64_t pageId, bool exclusive);
-    void unfixPage(BufferFrame& frame, bool isDirty);
+    BufferFrame* fixPage(uint64_t pageId, bool exclusive);
+    void unfixPage(BufferFrame* frame, bool isDirty);
     
     ~BufferManager();
     
 private:
+    std::mutex framesLock;
     std::unordered_map<uint64_t, BufferFrame*> frames;
 };
 

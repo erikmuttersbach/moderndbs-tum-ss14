@@ -15,14 +15,16 @@
 class BufferManager;
 
 class BufferFrame {
-friend BufferManager;
+friend class BufferManager;
     
 private:
+    bool dirty;
+    void *data;
+    
     pthread_rwlock_t lock;
     
 public:
     uint64_t pageId;
-    bool dirty;
     
     BufferFrame();
     BufferFrame(uint64_t pageId);

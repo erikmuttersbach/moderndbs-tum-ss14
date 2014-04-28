@@ -8,19 +8,72 @@
 
 #include "BufferManager.h"
 
+#include <unistd.h>
+#include <assert.h>
+
+#include <mutex>
+
 using namespace std;
+
+// TOOD Remove
+std::string thread_name() {
+    char name[256];
+    pthread_getname_np(pthread_self(), name, 256);
+    return std::string(name);
+}
+
+//unsigned int BufferManager::frameSize = getpagesize();
+unsigned int BufferManager::frameSize = sizeof(uint32_t);
 
 BufferManager::BufferManager(unsigned int size) : size(size) {
     
 }
 
-BufferFrame& BufferManager::fixPage(uint64_t pageId, bool exclusive) {
+BufferFrame *BufferManager::fixPage(uint64_t pageId, bool exclusive) {
     
     // if the frame is not loaded, load it if possible
     if(this->frames.find(pageId) == this->frames.end()) {
-        // TODO check if we can load a page, maybe by swapping out
-        // an unused one
+        this->framesLock.lock();
+        
+        // if the maximum amount of frames is stored, try to free one
+        if(this->frames.size() == this->size) {
+            for(auto it=this->frames.begin(); it!=this->frames.end(); it++) {
+                int r = pthread_rwlock_trywrlock(&it->second->lock);
+                if(r == EBUSY) {
+                    // the frame is already locked
+                    continue;
+                } else if(r == 0) {
+                    // the frame was locked by us, write it if dirty and
+                    // free the space
+                    bool wrote = false;
+                    if(it->second->dirty) {
+                        it->second->write();
+                        wrote = true;
+                    }
+                    
+                    cout << (string(thread_name()) + ": UNloaded " + to_string(PAGEID_PAGE(pageId)) + "wrote? " + to_string(wrote) + " AND DATA: " + to_string(static_cast<unsigned int*>(it->second->getData())[0])) << endl;
+                    
+                    this->frames.erase(it);
+                    
+                    
+                    
+                    break;
+                } else {
+                    throw runtime_error("Could not try lock (" + to_string(r) + "): " + strerror(r));
+                }
+            }
+            
+            // if there was no page we could free, throw an
+            // error
+            if(this->frames.size() == this->size) {
+                throw std::runtime_error("Could not free a frame");
+            }
+        }
+        
+        //cout << (string(thread_name()) + ": loaded " + to_string(PAGEID_PAGE(pageId))) << endl;
         this->frames.insert(make_pair(pageId, new BufferFrame(pageId)));
+        
+        this->framesLock.unlock();
     }
     
     BufferFrame *frame = this->frames[pageId];
@@ -38,26 +91,28 @@ BufferFrame& BufferManager::fixPage(uint64_t pageId, bool exclusive) {
         }
     }
     
-    cout << "Locked " << pageId << endl;
+    int x = this->frames.size();
+    assert(this->frames.size() <= this->size);
     
-    return *this->frames[pageId];
+    //cout << (thread_name() + ": Locked " + to_string(pageId)) << endl;
+    
+    return this->frames[pageId];
 }
 
-void BufferManager::unfixPage(BufferFrame& frame, bool isDirty) {
-    frame.dirty = isDirty;
+void BufferManager::unfixPage(BufferFrame *frame, bool isDirty) {
+    frame->dirty = isDirty;
     
-    int r = pthread_rwlock_unlock(&frame.lock);
+    int r = pthread_rwlock_unlock(&frame->lock);
     if(r != 0) {
         throw runtime_error("Could not unlock (" + to_string(r) + "): " + strerror(r));
     }
     
-    cout << "Unlocked " << frame.pageId << endl;
+    //cout << (thread_name() + ": Unlocked " + to_string(frame.pageId)) << endl;
 }
 
 BufferManager::~BufferManager() {
     for(auto it = this->frames.begin(); it != this->frames.end(); it++) {
         if(it->second->dirty) {
-            cout << "Writing " << it->second->pageId << endl;
             it->second->write();
         }
     }
