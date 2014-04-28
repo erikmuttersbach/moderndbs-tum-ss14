@@ -56,13 +56,9 @@ BufferFrame::BufferFrame(uint64_t pageId) : pageId(pageId), dirty(false) {
     }
     
     file.close();
-    
-    cout << (thread_name()  + ": Created " + to_string(pageId) + " ->data: " + to_string(static_cast<unsigned int*>(this->data)[0])) << endl;
 }
 
 BufferFrame::~BufferFrame() {
-    cout << (thread_name() + ": destroyed " + to_string(pageId)) << endl;
-    
     free(this->data);
     
     int r = pthread_rwlock_destroy(&this->lock);
@@ -91,8 +87,6 @@ void BufferFrame::write() {
     if(file.bad() || file.fail()) {
         throw runtime_error("Could not write file (" + to_string(errno) + "): " + strerror(errno));
     }
-    
-    cout << (thread_name() + ": Wrote " + to_string(PAGEID_PAGE(this->pageId)) + ": " + to_string((static_cast<uint32_t*>(this->data))[0])) << endl;
     
     file.close();
     

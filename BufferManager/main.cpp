@@ -36,7 +36,6 @@ static void* scan(void *arg) {
         for (unsigned page=start; page<start+10; page++) {
             BufferFrame *bf = bm->fixPage(page, false);
             unsigned newcount = reinterpret_cast<unsigned*>(bf->getData())[0];
-            cout << (thread_name() + ": CT("+to_string(bf->pageId)+"): " + to_string(counters[page]) + " || " + to_string((uint64_t)(bf->getData())) +  "\n");
             assert(counters[page]<=newcount);
             counters[page]=newcount;
             bm->unfixPage(bf, false);
@@ -60,7 +59,6 @@ static void* readWrite(void *arg) {
         if (isWrite) {
             count++;
             reinterpret_cast<unsigned*>(bf->getData())[0]++;
-            cout << (thread_name() + ": INC " + to_string(bf->pageId) + ": " + to_string(reinterpret_cast<unsigned*>(bf->getData())[0]) + " || " + to_string((uint64_t)(bf->getData())) + " \n");
         }
         bm->unfixPage(bf, isWrite);
     }

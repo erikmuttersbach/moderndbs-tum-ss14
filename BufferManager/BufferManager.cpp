@@ -51,11 +51,7 @@ BufferFrame *BufferManager::fixPage(uint64_t pageId, bool exclusive) {
                         wrote = true;
                     }
                     
-                    cout << (string(thread_name()) + ": UNloaded " + to_string(PAGEID_PAGE(pageId)) + "wrote? " + to_string(wrote) + " AND DATA: " + to_string(static_cast<unsigned int*>(it->second->getData())[0])) << endl;
-                    
                     this->frames.erase(it);
-                    
-                    
                     
                     break;
                 } else {
@@ -70,7 +66,6 @@ BufferFrame *BufferManager::fixPage(uint64_t pageId, bool exclusive) {
             }
         }
         
-        //cout << (string(thread_name()) + ": loaded " + to_string(PAGEID_PAGE(pageId))) << endl;
         this->frames.insert(make_pair(pageId, new BufferFrame(pageId)));
         
         this->framesLock.unlock();
@@ -91,10 +86,7 @@ BufferFrame *BufferManager::fixPage(uint64_t pageId, bool exclusive) {
         }
     }
     
-    int x = this->frames.size();
     assert(this->frames.size() <= this->size);
-    
-    //cout << (thread_name() + ": Locked " + to_string(pageId)) << endl;
     
     return this->frames[pageId];
 }
@@ -107,7 +99,6 @@ void BufferManager::unfixPage(BufferFrame *frame, bool isDirty) {
         throw runtime_error("Could not unlock (" + to_string(r) + "): " + strerror(r));
     }
     
-    //cout << (thread_name() + ": Unlocked " + to_string(frame.pageId)) << endl;
 }
 
 BufferManager::~BufferManager() {
