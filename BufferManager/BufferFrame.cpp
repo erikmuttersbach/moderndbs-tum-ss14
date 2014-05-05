@@ -70,7 +70,7 @@ BufferFrame::~BufferFrame() {
 void BufferFrame::write() {
     string path = "/tmp/"+to_string(PAGEID_SEGMENT(this->pageId));
     
-    fstream file(path, ios::binary | ios::out | ios::in );
+    /*fstream file(path, ios::binary | ios::out | ios::in );
     if(file.bad()) {
         throw runtime_error("Could not open file (" + to_string(errno) + "): " + strerror(errno));
     }
@@ -88,7 +88,20 @@ void BufferFrame::write() {
         throw runtime_error("Could not write file (" + to_string(errno) + "): " + strerror(errno));
     }
     
-    file.close();
+    file.close();*/
+    
+    int f = open(path.c_str(), O_WRONLY | O_CREAT, 0700);
+    if(f < 0) {
+        throw runtime_error("Could not open file (" + to_string(errno) + "): " + strerror(errno));
+    }
+    
+    off_t offset = BufferManager::frameSize*PAGEID_PAGE(this->pageId);
+    int r = pwrite(f, this->data, BufferManager::frameSize, offset);
+    if(r < 0) {
+        throw runtime_error("Could not pwrite file (" + to_string(errno) + "): " + strerror(errno));
+    }
+    
+    close(f);
     
     this->dirty = false;
 }

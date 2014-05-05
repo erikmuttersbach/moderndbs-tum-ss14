@@ -32,7 +32,7 @@ std::string thread_name();
 class BufferManager {
 public:
     unsigned int size;
-    static unsigned int frameSize;
+    static size_t frameSize;
     
     BufferManager(unsigned int size);
     

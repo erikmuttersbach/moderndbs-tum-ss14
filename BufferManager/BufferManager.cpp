@@ -23,7 +23,7 @@ std::string thread_name() {
 }
 
 //unsigned int BufferManager::frameSize = getpagesize();
-unsigned int BufferManager::frameSize = sizeof(uint32_t);
+size_t BufferManager::frameSize = sizeof(uint32_t);
 
 BufferManager::BufferManager(unsigned int size) : size(size) {
     
