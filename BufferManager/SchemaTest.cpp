@@ -34,6 +34,9 @@ TEST_F(SchemaTest, TestSerialization) {
     schema.relations.push_back(relation1);
     
     Relation relation2("relation2", 2);
+    relation2.attributes.push_back(Attribute("foo", AttributeType::string));
+    relation2.attributes.push_back(Attribute("bar", AttributeType::uint32));
+    relation2.attributes.push_back(Attribute("abc", AttributeType::int32));
     schema.relations.push_back(relation2);
     
     schema.serialize();
@@ -48,4 +51,10 @@ TEST_F(SchemaTest, TestSerialization) {
     
     ASSERT_EQ(std::string("relation2"), schema2.relations[1].name);
     ASSERT_EQ(2, schema2.relations[1].segmentId);
+    ASSERT_EQ(std::string("foo"), schema2.relations[1].attributes[0].name);
+    ASSERT_EQ(AttributeType::string, schema2.relations[1].attributes[0].type);
+    ASSERT_EQ(std::string("bar"), schema2.relations[1].attributes[1].name);
+    ASSERT_EQ(AttributeType::uint32, schema2.relations[1].attributes[1].type);
+    ASSERT_EQ(std::string("abc"), schema2.relations[1].attributes[2].name);
+    ASSERT_EQ(AttributeType::int32, schema2.relations[1].attributes[2].type);
 }

@@ -10,15 +10,12 @@
 #define __BufferManager__Relation__
 
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <string>
 #include <vector>
 
-typedef enum {
-    string,
-    uint32,
-    int32
-} ColumnType;
+#include "Attribute.h"
 
 class Relation {
 public:
@@ -28,7 +25,7 @@ public:
     std::string name;
     unsigned int segmentId;
     size_t pageCount;
-    std::vector<std::pair<std::string, ColumnType>> columns;
+    std::vector<Attribute> attributes;
     
     friend class boost::serialization::access;
     template<class Archive>
@@ -36,6 +33,7 @@ public:
     {
         ar & name;
         ar & segmentId;
+        ar & attributes;
     }
 };
 
