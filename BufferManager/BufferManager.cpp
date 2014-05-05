@@ -23,18 +23,18 @@ std::string thread_name() {
 }
 
 //unsigned int BufferManager::frameSize = getpagesize();
-size_t BufferManager::frameSize = sizeof(uint32_t);
+size_t BufferManager::frameSize = 4096;
 
 BufferManager::BufferManager(unsigned int size) : size(size) {
     
 }
 
 BufferFrame *BufferManager::fixPage(uint64_t pageId, bool exclusive) {
+    this->framesLock.lock();
     
     // if the frame is not loaded, load it if possible
-    if(this->frames.find(pageId) == this->frames.end()) {
-        this->framesLock.lock();
-        
+    auto end = this->frames.end();
+    if(this->frames.find(pageId) == end) {
         // if the maximum amount of frames is stored, try to free one
         if(this->frames.size() == this->size) {
             for(auto it=this->frames.begin(); it!=this->frames.end(); it++) {
@@ -45,10 +45,8 @@ BufferFrame *BufferManager::fixPage(uint64_t pageId, bool exclusive) {
                 } else if(r == 0) {
                     // the frame was locked by us, write it if dirty and
                     // free the space
-                    bool wrote = false;
-                    if(it->second->dirty) {
+                    if(it->second->dirty || true) {
                         it->second->write();
-                        wrote = true;
                     }
                     
                     this->frames.erase(it);
@@ -66,10 +64,12 @@ BufferFrame *BufferManager::fixPage(uint64_t pageId, bool exclusive) {
             }
         }
         
-        this->frames.insert(make_pair(pageId, new BufferFrame(pageId)));
-        
-        this->framesLock.unlock();
+        BufferFrame *frame = new BufferFrame(pageId);
+        this->frames.insert(make_pair(pageId, frame));
     }
+    
+    this->framesLock.unlock();
+    
     
     BufferFrame *frame = this->frames[pageId];
     
@@ -101,10 +101,21 @@ void BufferManager::unfixPage(BufferFrame *frame, bool isDirty) {
     
 }
 
-BufferManager::~BufferManager() {
-    for(auto it = this->frames.begin(); it != this->frames.end(); it++) {
-        if(it->second->dirty) {
+void BufferManager::writeAll() {
+    for(auto it = this->frames.begin(); it != this->frames.end(); ++it) {
+        BufferFrame *frame = (*it).second;
+        if(frame->dirty) {
             it->second->write();
         }
+    }
+}
+
+BufferManager::~BufferManager() {
+    for(auto it = this->frames.begin(); it != this->frames.end(); ++it) {
+        BufferFrame *frame = (*it).second;
+        if(frame->dirty) {
+            it->second->write();
+        }
+        delete frame;
     }
 }

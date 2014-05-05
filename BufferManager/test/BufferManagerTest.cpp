@@ -12,7 +12,7 @@
 
 using namespace std;
 
-
+/*
 TEST(BufferManagerTest, TestWriteAndLoad3Pages) {
     BufferManager *bufferManager = new BufferManager(1);
     
@@ -44,4 +44,23 @@ TEST(BufferManagerTest, TestWriteAndLoad3Pages) {
     ASSERT_EQ(static_cast<int*>(frame->getData())[0], 45);
     bufferManager->unfixPage(frame, false);
     
+    delete bufferManager;
 }
+
+TEST(BufferManagerTest, TestSchemaCodePathFail) {
+    BufferManager bufferManager(5);
+    
+    BufferFrame *frame = bufferManager.fixPage(PAGEID(0, 1), false);
+    bufferManager.unfixPage(frame, false);
+    
+    frame = bufferManager.fixPage(PAGEID(0, 1), true);
+    void *data = malloc(BufferManager::frameSize);
+    memset(data, 'A', BufferManager::frameSize);
+    memcpy(frame->getData(), data, BufferManager::frameSize);
+    bufferManager.unfixPage(frame, true);
+    
+    frame = bufferManager.fixPage(PAGEID(0, 1), false);
+    ASSERT_EQ(static_cast<char*>(frame->getData())[0], 'A');
+    ASSERT_EQ(static_cast<char*>(frame->getData())[BufferManager::frameSize-1], 'A');
+    bufferManager.unfixPage(frame, false);
+}*/

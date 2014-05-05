@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <pthread.h>
 
+#include <streambuf>
+
 class BufferManager;
 
 class BufferFrame {

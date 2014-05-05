@@ -23,7 +23,7 @@
 using namespace std;
 
 BufferFrame::BufferFrame() : pageId(0), dirty(false) {
-
+    cout << "Crearing" << endl;
 }
 
 BufferFrame::BufferFrame(uint64_t pageId) : pageId(pageId), dirty(false) {
@@ -61,6 +61,8 @@ BufferFrame::BufferFrame(uint64_t pageId) : pageId(pageId), dirty(false) {
 BufferFrame::~BufferFrame() {
     free(this->data);
     
+    cout << "Destructing frame " << to_string(this->pageId) << endl;
+    
     int r = pthread_rwlock_destroy(&this->lock);
     if(r != 0) {
         throw runtime_error("Could not destroy rwlock (" + to_string(r) + "): " + strerror(r));
@@ -69,26 +71,6 @@ BufferFrame::~BufferFrame() {
 
 void BufferFrame::write() {
     string path = "/tmp/"+to_string(PAGEID_SEGMENT(this->pageId));
-    
-    /*fstream file(path, ios::binary | ios::out | ios::in );
-    if(file.bad()) {
-        throw runtime_error("Could not open file (" + to_string(errno) + "): " + strerror(errno));
-    }
-    
-    int a = BufferManager::frameSize*PAGEID_PAGE(this->pageId);
-    file.seekp(BufferManager::frameSize*PAGEID_PAGE(this->pageId), ios_base::beg);
-    if(file.bad() || file.fail()) {
-        throw runtime_error("Could not seek file (" + to_string(errno) + "): " + strerror(errno));
-    }
-    
-    int s = file.tellp();
-    
-    file.write(static_cast<char*>(this->data), BufferManager::frameSize);
-    if(file.bad() || file.fail()) {
-        throw runtime_error("Could not write file (" + to_string(errno) + "): " + strerror(errno));
-    }
-    
-    file.close();*/
     
     int f = open(path.c_str(), O_WRONLY | O_CREAT, 0700);
     if(f < 0) {

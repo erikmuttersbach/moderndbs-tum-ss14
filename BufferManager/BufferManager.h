@@ -43,6 +43,11 @@ public:
     BufferFrame* fixPage(uint64_t pageId, bool exclusive);
     void unfixPage(BufferFrame* frame, bool isDirty);
     
+    /**
+     * Writes all dirty pages
+     */
+    void writeAll();
+    
     ~BufferManager();
     
 private:
