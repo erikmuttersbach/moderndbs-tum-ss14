@@ -34,6 +34,10 @@ public:
     unsigned int size;
     static size_t frameSize;
     
+    /**
+     * Construct a buffer manager which holds up to `size`
+     * pages in memory.
+     */
     BufferManager(unsigned int size);
     
     BufferFrame* fixPage(uint64_t pageId, bool exclusive);
